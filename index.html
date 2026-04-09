@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SonoCue — Ultrasound Reference for Sonographers</title>
+  <meta name="description" content="The clinical ultrasound reference app built by a sonographer. Differentials, BPP, biometry, Doppler normals, and AI worksheet analysis — all in one place." />
+  <meta property="og:title" content="SonoCue — Coming Soon" />
+  <meta property="og:description" content="Built by a sonographer for sonographers. Launching 2026." />
+  <meta property="og:image" content="https://sonocue.app/og.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:     #080c18;
+      --card:   rgba(13,22,42,0.9);
+      --teal:   #22d3ee;
+      --teal2:  #0ea5e9;
+      --text:   #c9d4e8;
+      --dim:    #3a5a78;
+      --border: rgba(34,211,238,0.15);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── Background grid ── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0; z-index: 0;
+      background-image:
+        linear-gradient(rgba(34,211,238,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(34,211,238,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+    }
+
+    /* ── Glow orbs ── */
+    .orb {
+      position: fixed; border-radius: 50%;
+      filter: blur(80px); pointer-events: none; z-index: 0;
+    }
+    .orb-1 {
+      width: 500px; height: 500px;
+      background: radial-gradient(circle, rgba(34,211,238,0.08), transparent 70%);
+      top: -100px; left: -100px;
+    }
+    .orb-2 {
+      width: 400px; height: 400px;
+      background: radial-gradient(circle, rgba(14,165,233,0.06), transparent 70%);
+      bottom: -80px; right: -80px;
+    }
+
+    /* ── Layout ── */
+    .wrap {
+      position: relative; z-index: 1;
+      max-width: 580px; margin: 0 auto;
+      padding: 0 24px;
+      min-height: 100vh;
+      display: flex; flex-direction: column; justify-content: center;
+      padding-top: 60px; padding-bottom: 60px;
+    }
+
+    /* ── Logo mark ── */
+    .logo-wrap {
+      display: flex; align-items: center; gap: 14px;
+      margin-bottom: 48px;
+      animation: fadeUp 0.6s ease both;
+    }
+    .logo-icon {
+      width: 48px; height: 48px; border-radius: 14px;
+      background: linear-gradient(135deg, var(--teal), var(--teal2));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px; flex-shrink: 0;
+      box-shadow: 0 0 30px rgba(34,211,238,0.3);
+    }
+    .logo-text { font-size: 28px; font-weight: 800; color: #e2eaf7; letter-spacing: -0.5px; }
+    .logo-sub  { font-size: 11px; color: var(--dim); letter-spacing: 2px; text-transform: uppercase; margin-top: 2px; }
+
+    /* ── Badge ── */
+    .badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(34,211,238,0.08);
+      border: 1px solid rgba(34,211,238,0.2);
+      border-radius: 99px; padding: 5px 14px;
+      font-size: 11px; font-weight: 700; color: var(--teal);
+      letter-spacing: 0.8px; text-transform: uppercase;
+      margin-bottom: 20px;
+      animation: fadeUp 0.6s 0.1s ease both;
+    }
+    .badge-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--teal);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    /* ── Headline ── */
+    h1 {
+      font-size: clamp(32px, 6vw, 48px);
+      font-weight: 800; line-height: 1.15;
+      color: #e8f0fc; letter-spacing: -1px;
+      margin-bottom: 16px;
+      animation: fadeUp 0.6s 0.15s ease both;
+    }
+    h1 span { color: var(--teal); }
+
+    /* ── Subhead ── */
+    .sub {
+      font-size: 17px; color: #6a8aa8; line-height: 1.65;
+      margin-bottom: 36px;
+      animation: fadeUp 0.6s 0.2s ease both;
+    }
+
+    /* ── Feature pills ── */
+    .features {
+      display: flex; flex-wrap: wrap; gap: 8px;
+      margin-bottom: 40px;
+      animation: fadeUp 0.6s 0.25s ease both;
+    }
+    .feature {
+      display: flex; align-items: center; gap: 6px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 8px; padding: 6px 12px;
+      font-size: 12px; color: #8aaabb; font-weight: 500;
+    }
+    .feature-icon { font-size: 13px; }
+
+    /* ── Email form ── */
+    .form-wrap {
+      animation: fadeUp 0.6s 0.3s ease both;
+      margin-bottom: 32px;
+    }
+    .form-label {
+      font-size: 13px; font-weight: 600; color: #8aaabb;
+      margin-bottom: 10px; display: block;
+    }
+    .form-row {
+      display: flex; gap: 8px; flex-wrap: wrap;
+    }
+    .form-input {
+      flex: 1; min-width: 200px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border);
+      border-radius: 12px; padding: 14px 16px;
+      color: #e2eaf7; font-size: 15px; font-family: 'DM Sans', sans-serif;
+      outline: none; transition: border-color 0.2s;
+    }
+    .form-input::placeholder { color: var(--dim); }
+    .form-input:focus { border-color: var(--teal); }
+    .form-btn {
+      padding: 14px 24px; border-radius: 12px; cursor: pointer;
+      background: linear-gradient(135deg, rgba(34,211,238,0.2), rgba(14,165,233,0.2));
+      border: 1px solid var(--teal); color: var(--teal);
+      font-size: 14px; font-weight: 800; font-family: 'DM Sans', sans-serif;
+      letter-spacing: 0.3px; white-space: nowrap;
+      transition: all 0.2s;
+    }
+    .form-btn:hover { background: rgba(34,211,238,0.25); box-shadow: 0 0 20px rgba(34,211,238,0.2); }
+
+    /* ── Success state ── */
+    .success {
+      display: none;
+      background: rgba(34,211,238,0.08);
+      border: 1px solid rgba(34,211,238,0.25);
+      border-radius: 12px; padding: 14px 18px;
+      font-size: 14px; color: var(--teal); font-weight: 600;
+    }
+
+    /* ── By line ── */
+    .byline {
+      display: flex; align-items: center; gap: 10px;
+      padding: 14px 16px;
+      background: rgba(255,255,255,0.02);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 12px; margin-bottom: 32px;
+      animation: fadeUp 0.6s 0.35s ease both;
+    }
+    .byline-icon { font-size: 20px; flex-shrink: 0; }
+    .byline-text { font-size: 13px; color: #5a8aaa; line-height: 1.5; }
+    .byline-text strong { color: #8ab0cc; }
+
+    /* ── Social ── */
+    .social {
+      display: flex; align-items: center; gap: 16px;
+      animation: fadeUp 0.6s 0.4s ease both;
+    }
+    .social-label { font-size: 11px; color: var(--dim); letter-spacing: 0.8px; text-transform: uppercase; }
+    .social-link {
+      display: flex; align-items: center; gap: 6px;
+      color: var(--teal); text-decoration: none;
+      font-size: 13px; font-weight: 600;
+      border: 1px solid rgba(34,211,238,0.2);
+      border-radius: 8px; padding: 6px 14px;
+      transition: all 0.2s;
+    }
+    .social-link:hover { background: rgba(34,211,238,0.08); border-color: rgba(34,211,238,0.4); }
+
+    /* ── Footer ── */
+    footer {
+      position: relative; z-index: 1;
+      text-align: center; padding: 20px;
+      font-size: 10px; color: #1a3050; letter-spacing: 0.5px;
+    }
+
+    /* ── Animations ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 0.4; transform: scale(0.9); }
+      50%       { opacity: 1;   transform: scale(1.1); }
+    }
+
+    @media (max-width: 480px) {
+      .form-row { flex-direction: column; }
+      .form-btn  { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+
+  <div class="wrap">
+
+    <!-- Logo -->
+    <div class="logo-wrap">
+      <div class="logo-icon">🔊</div>
+      <div>
+        <div class="logo-text">SonoCue</div>
+        <div class="logo-sub">Ultrasound Reference</div>
+      </div>
+    </div>
+
+    <!-- Badge -->
+    <div class="badge">
+      <div class="badge-dot"></div>
+      Launching 2026
+    </div>
+
+    <!-- Headline -->
+    <h1>The ultrasound app<br /><span>built for the scan room.</span></h1>
+
+    <!-- Subhead -->
+    <p class="sub">
+      Differentials, BPP scoring, biometry calculators, Doppler normals, and AI worksheet analysis — all in one place. Built by a working RDMS who needed it mid-scan and couldn't find it.
+    </p>
+
+    <!-- Features -->
+    <div class="features">
+      <div class="feature"><span class="feature-icon">🔍</span> Differential Reference</div>
+      <div class="feature"><span class="feature-icon">📋</span> Interactive BPP</div>
+      <div class="feature"><span class="feature-icon">📐</span> Biometry Calculators</div>
+      <div class="feature"><span class="feature-icon">〰️</span> Doppler Normals</div>
+      <div class="feature"><span class="feature-icon">📅</span> GA Charts</div>
+      <div class="feature"><span class="feature-icon">🤖</span> AI Worksheet Analyzer</div>
+    </div>
+
+    <!-- Email form -->
+    <div class="form-wrap">
+      <label class="form-label" for="email">Get notified at launch — no spam, one email.</label>
+      <div class="form-row">
+        <input class="form-input" type="email" id="email" placeholder="your@email.com" />
+        <button class="form-btn" onclick="handleSubmit()">Notify Me →</button>
+      </div>
+      <div class="success" id="success">
+        ✓ You're on the list — we'll reach out when SonoCue launches.
+      </div>
+    </div>
+
+    <!-- By line -->
+    <div class="byline">
+      <div class="byline-icon">👩‍⚕️</div>
+      <div class="byline-text">
+        <strong>Built by Tricia Henderson, RDMS</strong> — travel sonographer with 8+ years across OB, GYN, abdominal, and vascular. If it's missing from SonoCue, it's because she hasn't scanned it yet.
+      </div>
+    </div>
+
+    <!-- Social -->
+    <div class="social">
+      <span class="social-label">Follow the build</span>
+      <a class="social-link" href="https://instagram.com/sonocueapp" target="_blank" rel="noopener">
+        📸 @sonocueapp
+      </a>
+      <a class="social-link" href="https://instagram.com/pixelnpulsetravelers" target="_blank" rel="noopener">
+        ✈️ @pixelnpulse
+      </a>
+    </div>
+
+  </div>
+
+  <footer>
+    © 2026 SonoCue · sonocue.app · Clinical reference only · Not a diagnostic tool
+  </footer>
+
+  <script>
+    function handleSubmit() {
+      const email = document.getElementById('email').value.trim();
+      if (!email || !email.includes('@')) {
+        document.getElementById('email').style.borderColor = '#ef4444';
+        setTimeout(() => document.getElementById('email').style.borderColor = '', 1500);
+        return;
+      }
+      // In production: POST to your email capture backend (Mailchimp, ConvertKit, Resend, etc.)
+      // For now: show success state
+      document.querySelector('.form-row').style.display = 'none';
+      document.getElementById('success').style.display  = 'block';
+      document.querySelector('.form-label').textContent  = 'Thanks for signing up.';
+    }
+
+    // Allow Enter key to submit
+    document.getElementById('email').addEventListener('keydown', e => {
+      if (e.key === 'Enter') handleSubmit();
+    });
+  </script>
+</body>
+</html>
